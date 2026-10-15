@@ -257,11 +257,6 @@
       box-shadow: 0 3px 0 #C82333;
     }
 
-    .clear-btn:active {
-      transform: translateY(2px);
-      box-shadow: 0 1px 0 #C82333;
-    }
-
     .verb-options {
       display: flex;
       justify-content: center;
@@ -323,7 +318,7 @@
       transition: width 0.3s ease;
     }
 
-    /* Module 2: Song Sentence Sequence */
+    /* Module 2: Song Sentence Sequence (Tap & Drag) */
     .sentence-list {
       display: flex;
       flex-direction: column;
@@ -333,21 +328,35 @@
 
     .sentence-card {
       background: white;
-      border: 2px solid #1DD1A1;
-      padding: 12px 18px;
-      border-radius: 14px;
+      border: 3px solid #1DD1A1;
+      padding: 14px 18px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      transition: all 0.2s;
+      gap: 14px;
+      transition: all 0.2s ease;
       font-weight: 700;
       font-size: 1.05rem;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+      cursor: grab;
+      position: relative;
+    }
+
+    .sentence-card.selected {
+      border-color: #FF9F43;
+      background: #FFF3E0;
+      transform: scale(1.02);
+      box-shadow: 0 6px 15px rgba(255, 159, 67, 0.3);
+    }
+
+    .sentence-card.dragging {
+      opacity: 0.4;
+      border-style: dashed;
     }
 
     .sentence-num {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       background: var(--accent);
       color: white;
       border-radius: 50%;
@@ -356,6 +365,7 @@
       justify-content: center;
       font-family: 'Fredoka One', cursive;
       flex-shrink: 0;
+      font-size: 1.1rem;
     }
 
     .sentence-text {
@@ -363,26 +373,10 @@
       color: #2C3E50;
     }
 
-    .move-btns {
-      display: flex;
-      gap: 6px;
-    }
-
-    .move-btn {
-      background: #E8F4FE;
-      border: 2px solid #54A0FF;
-      color: #2E86DE;
-      border-radius: 10px;
-      padding: 6px 10px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 0.9rem;
-      transition: all 0.15s;
-    }
-
-    .move-btn:active {
-      background: #54A0FF;
-      color: white;
+    .drag-handle {
+      font-size: 1.3rem;
+      color: #A4B0BE;
+      cursor: grab;
     }
 
     .feedback-msg {
@@ -401,7 +395,7 @@
       .tab-btn { font-size: 0.85rem; padding: 8px 12px; }
       .letter-btn { width: 38px; height: 42px; font-size: 1.3rem; }
       .slot-tile { width: 36px; height: 40px; font-size: 1.3rem; }
-      .sentence-card { font-size: 0.9rem; padding: 10px; }
+      .sentence-card { font-size: 0.9rem; padding: 12px; }
     }
   </style>
 </head>
@@ -422,7 +416,7 @@
     <div class="teacher-box">
       <div class="teacher-avatar">🧕</div>
       <div class="teacher-speech" id="teacher-text">
-        Hello pupils! I am Teacher Wafi. Tap the letter tiles to unjumble the word, then pick the matching verb!
+        Hello pupils! I am Teacher Wafi. Tap letter tiles to spell the word, then pick the matching verb!
       </div>
     </div>
 
@@ -457,10 +451,10 @@
       </div>
     </div>
 
-    <!-- MODULE 2: Song Sentence Sequence -->
+    <!-- MODULE 2: Song Sentence Sequence (Tap & Drag) -->
     <div id="tab2" class="game-screen">
       <p style="text-align: center; font-weight:700; margin-bottom: 12px; color:#2E86DE; font-size:1.1rem;">
-        🎶 Re-arrange the song lyrics into the correct sequence!
+        🎶 Tap any 2 sentences to swap them, OR drag & drop them into place!
       </p>
 
       <div class="sentence-list" id="sentence-container"></div>
@@ -501,7 +495,11 @@
     let selectedVerb = "";
     let jumbledTiles = [];
     let placedLetters = [];
+
+    // Sequence Tap & Drag variables
     let currentSongOrder = [];
+    let selectedTapIndex = null;
+    let draggedIndex = null;
 
     window.onload = function() {
       loadWordQuestion();
@@ -521,11 +519,11 @@
       if(tabId === 'tab1') {
         teacherSpeech.innerText = "Teacher Wafi says: Tap the letter tiles to spell the word, then choose the verb!";
       } else if(tabId === 'tab2') {
-        teacherSpeech.innerText = "Teacher Wafi says: Use the ▲ and ▼ buttons to arrange the beach song lyrics in order!";
+        teacherSpeech.innerText = "Teacher Wafi says: Tap 2 sentences to swap them, or drag & drop them into order!";
       }
     }
 
-    /* MODULE 1: Tile-Based Unscramble */
+    /* MODULE 1: Unscramble & Verb Matching */
     function loadWordQuestion() {
       const item = wordData[currentWordIndex];
       document.getElementById('item-icon').innerText = item.icon;
@@ -533,17 +531,14 @@
       selectedVerb = "";
       placedLetters = [];
 
-      // Update progress
       const progressPercent = (currentWordIndex / wordData.length) * 100;
       document.getElementById('word-progress').style.width = progressPercent + "%";
 
-      // Prepare Jumbled Tiles (ignoring spaces for "ice cream")
       const letters = item.target.replace(/\s+/g, '').split('');
       jumbledTiles = letters.map((char, id) => ({ id, char })).sort(() => Math.random() - 0.5);
 
       renderTilesAndSlots();
 
-      // Populate Verb Buttons
       const verbContainer = document.getElementById('verb-container');
       verbContainer.innerHTML = "";
       item.verbs.forEach(v => {
@@ -559,7 +554,6 @@
       const item = wordData[currentWordIndex];
       const targetLength = item.target.replace(/\s+/g, '').length;
 
-      // Render Slots
       const slotsContainer = document.getElementById('slots-container');
       slotsContainer.innerHTML = "";
 
@@ -576,7 +570,6 @@
         slotsContainer.appendChild(tile);
       }
 
-      // Render Bank Tiles
       const bankContainer = document.getElementById('tiles-bank');
       bankContainer.innerHTML = "";
 
@@ -633,7 +626,7 @@
             loadWordQuestion();
           } else {
             document.getElementById('word-progress').style.width = "100%";
-            document.getElementById('teacher-text').innerText = "Teacher Wafi says: Outstanding! You completed all vocabulary items! Now try sequencing the song!";
+            document.getElementById('teacher-text').innerText = "Teacher Wafi says: Outstanding! You completed all words! Now try sequencing the song!";
             alert("🎉 Well done! You unjumbled all words and matched their verbs!");
           }
         }, 1200);
@@ -649,9 +642,8 @@
       }
     }
 
-    /* MODULE 2: Song Sentence Sequence */
+    /* MODULE 2: Song Sentence Sequence (Tap & Drag) */
     function initSongSequence() {
-      // Shuffle sentences initially
       currentSongOrder = [...songSentencesCorrect].sort(() => Math.random() - 0.5);
       renderSongSentences();
     }
@@ -662,27 +654,64 @@
 
       currentSongOrder.forEach((sentence, idx) => {
         const card = document.createElement('div');
-        card.className = "sentence-card";
+        card.className = "sentence-card" + (selectedTapIndex === idx ? " selected" : "");
+        card.draggable = true;
+        card.dataset.index = idx;
+
         card.innerHTML = `
           <div class="sentence-num">${idx + 1}</div>
           <div class="sentence-text">${sentence}</div>
-          <div class="move-btns">
-            ${idx > 0 ? `<button class="move-btn" onclick="moveSentence(${idx}, -1)">▲ Move Up</button>` : ''}
-            ${idx < currentSongOrder.length - 1 ? `<button class="move-btn" onclick="moveSentence(${idx}, 1)">▼ Move Down</button>` : ''}
-          </div>
+          <div class="drag-handle">☰</div>
         `;
+
+        // Tap to swap logic
+        card.onclick = () => handleSentenceTap(idx);
+
+        // Drag & Drop logic
+        card.ondragstart = (e) => {
+          draggedIndex = idx;
+          card.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        };
+
+        card.ondragend = () => {
+          card.classList.remove('dragging');
+          draggedIndex = null;
+        };
+
+        card.ondragover = (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        };
+
+        card.ondrop = (e) => {
+          e.preventDefault();
+          if (draggedIndex !== null && draggedIndex !== idx) {
+            swapSentences(draggedIndex, idx);
+          }
+        };
+
         container.appendChild(card);
       });
     }
 
-    function moveSentence(index, direction) {
-      const targetIndex = index + direction;
-      if (targetIndex >= 0 && targetIndex < currentSongOrder.length) {
-        const temp = currentSongOrder[index];
-        currentSongOrder[index] = currentSongOrder[targetIndex];
-        currentSongOrder[targetIndex] = temp;
-        renderSongSentences();
+    function handleSentenceTap(index) {
+      if (selectedTapIndex === null) {
+        selectedTapIndex = index;
+      } else if (selectedTapIndex === index) {
+        selectedTapIndex = null;
+      } else {
+        swapSentences(selectedTapIndex, index);
+        selectedTapIndex = null;
       }
+      renderSongSentences();
+    }
+
+    function swapSentences(idx1, idx2) {
+      const temp = currentSongOrder[idx1];
+      currentSongOrder[idx1] = currentSongOrder[idx2];
+      currentSongOrder[idx2] = temp;
+      renderSongSentences();
     }
 
     function checkSongSequence() {
@@ -696,7 +725,7 @@
         document.getElementById('teacher-text').innerText = "Teacher Wafi says: Superb job! You got the entire beach song in order! 🏆";
       } else {
         feedback.className = "feedback-msg wrong";
-        feedback.innerText = "❌ The sequence isn't quite right yet. Keep swapping sentences!";
+        feedback.innerText = "❌ The sequence isn't quite right yet. Keep tapping or dragging sentences!";
       }
     }
   </script>
