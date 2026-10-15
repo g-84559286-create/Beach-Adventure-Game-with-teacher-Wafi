@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beach Adventure Game with Teacher Wafi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --primary: #FF6B6B;
+      --primary-dark: #EE5253;
+      --secondary: #48DBFB;
+      --accent: #FF9F43;
+      --green: #1DD1A1;
+      --yellow: #FECA57;
+      --dark: #222F3E;
+      --card-bg: rgba(255, 255, 255, 0.92);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: linear-gradient(180deg, #70A1FF 0%, #A0E7E5 50%, #FFEAA7 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--dark);
+      overflow-x: hidden;
+      padding-bottom: 20px;
+    }
+
+    header {
+      width: 100%;
+      background: linear-gradient(135deg, #FF6B6B, #FF9F43);
+      color: white;
+      text-align: center;
+      padding: 12px 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      position: relative;
+    }
+
+    h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.8rem;
+      text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+      letter-spacing: 1px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 15px 10px;
+      flex-wrap: wrap;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .tab-btn {
+      font-family: 'Fredoka One', cursive;
+      background: var(--card-bg);
+      border: 3px solid white;
+      padding: 10px 18px;
+      border-radius: 25px;
+      font-size: 1rem;
+      color: var(--dark);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      color: white;
+      transform: scale(1.05);
+      border-color: var(--yellow);
+    }
+
+    .container {
+      width: 95%;
+      max-width: 850px;
+      background: var(--card-bg);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+      border: 4px solid white;
+      margin-bottom: 20px;
+    }
+
+    /* Teacher Wafi Avatar Section */
+    .teacher-box {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      background: #E3FAF8;
+      border-radius: 18px;
+      padding: 12px 18px;
+      border: 2px solid #A0E7E5;
+      margin-bottom: 20px;
+    }
+
+    .teacher-avatar {
+      width: 65px;
+      height: 65px;
+      background: #FF9F43;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      border: 3px solid white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      flex-shrink: 0;
+    }
+
+    .teacher-speech {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #0ABDE3;
+      line-height: 1.4;
+    }
+
+    /* Module Screens */
+    .game-screen {
+      display: none;
+    }
+
+    .game-screen.active {
+      display: block;
+    }
+
+    /* Module 1: Word & Verb Game */
+    .word-card {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+      margin-bottom: 15px;
+    }
+
+    .word-icon {
+      font-size: 4.5rem;
+      margin-bottom: 10px;
+      animation: bounce 2s infinite ease-in-out;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .jumbled-box {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.2rem;
+      letter-spacing: 6px;
+      color: var(--primary);
+      background: #FFF5F5;
+      padding: 12px 20px;
+      border-radius: 15px;
+      display: inline-block;
+      margin-bottom: 15px;
+      border: 2px dashed var(--primary);
+    }
+
+    .input-section {
+      margin-bottom: 15px;
+    }
+
+    .word-input {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.5rem;
+      text-align: center;
+      padding: 10px 15px;
+      width: 80%;
+      max-width: 300px;
+      border: 3px solid #A0E7E5;
+      border-radius: 15px;
+      outline: none;
+      color: var(--dark);
+      text-transform: lowercase;
+    }
+
+    .word-input:focus {
+      border-color: var(--accent);
+    }
+
+    .verb-options {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+
+    .verb-btn {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.1rem;
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 2px solid #54A0FF;
+      background: #E8F4FE;
+      color: #2E86DE;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .verb-btn:hover, .verb-btn.selected {
+      background: #2E86DE;
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    .action-btn {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.2rem;
+      padding: 12px 30px;
+      border-radius: 20px;
+      border: none;
+      background: var(--green);
+      color: white;
+      cursor: pointer;
+      margin-top: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      transition: all 0.2s;
+    }
+
+    .action-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Progress Header */
+    .progress-bar-container {
+      width: 100%;
+      height: 16px;
+      background: #E0E0E0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 15px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--yellow), var(--green));
+      transition: width 0.3s ease;
+    }
+
+    /* Module 2: Song Sentence Sequence */
+    .video-container {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    }
+
+    .video-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .sentence-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .sentence-card {
+      background: white;
+      border: 2px solid #1DD1A1;
+      padding: 12px 18px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: grab;
+      transition: all 0.2s;
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+
+    .sentence-card:active {
+      cursor: grabbing;
+    }
+
+    .sentence-num {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Fredoka One', cursive;
+      flex-shrink: 0;
+    }
+
+    .sentence-text {
+      flex-grow: 1;
+    }
+
+    .move-btns {
+      display: flex;
+      gap: 5px;
+    }
+
+    .move-btn {
+      background: #E8F4FE;
+      border: 1px solid #54A0FF;
+      color: #2E86DE;
+      border-radius: 8px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    /* Notebook Section */
+    .notebook {
+      background: #FFFDF0;
+      border-left: 5px solid #FF6B6B;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+      line-height: 2;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .notebook ol {
+      padding-left: 25px;
+    }
+
+    .notebook li {
+      margin-bottom: 8px;
+      color: #2C3E50;
+    }
+
+    .feedback-msg {
+      margin-top: 10px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      min-height: 25px;
+    }
+
+    .correct { color: #1DD1A1; }
+    .wrong { color: #EE5253; }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 1.4rem; }
+      .teacher-speech { font-size: 0.95rem; }
+      .tab-btn { font-size: 0.85rem; padding: 8px 12px; }
+      .sentence-card { font-size: 0.95rem; padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🏖️ Beach Adventure Game</h1>
+    <p style="font-size: 0.9rem; opacity: 0.9;">With Teacher Wafi</p>
+  </header>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('tab1')">🔤 1. Word & Verb Match</button>
+    <button class="tab-btn" onclick="switchTab('tab2')">🎵 2. Song Sentence Order</button>
+    <button class="tab-btn" onclick="switchTab('tab3')">📓 3. Exercise Book</button>
+  </div>
+
+  <div class="container">
+    <!-- Teacher Wafi Speech Header -->
+    <div class="teacher-box">
+      <div class="teacher-avatar">👨‍🏫</div>
+      <div class="teacher-speech" id="teacher-text">
+        Hello pupils! I am Teacher Wafi. Let's start our beach adventure! Unjumble the words and choose the right verb!
+      </div>
+    </div>
+
+    <!-- MODULE 1: Word & Verb Matching Game -->
+    <div id="tab1" class="game-screen active">
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="word-progress"></div>
+      </div>
+
+      <div class="word-card">
+        <div class="word-icon" id="item-icon">🏰</div>
+        <div class="jumbled-box" id="jumbled-display">s a n d c a s t l e</div>
+
+        <div class="input-section">
+          <p style="margin-bottom: 8px; font-weight:700;">1. Unscramble the word:</p>
+          <input type="text" id="user-word" class="word-input" placeholder="type word..." autocomplete="off">
+        </div>
+
+        <div>
+          <p style="margin-bottom: 8px; font-weight:700;">2. Choose the correct action verb:</p>
+          <div class="verb-options" id="verb-container">
+            <!-- Dynamic verb buttons -->
+          </div>
+        </div>
+
+        <div class="feedback-msg" id="word-feedback"></div>
+        <button class="action-btn" onclick="checkWordAnswer()">Check Answer ✨</button>
+      </div>
+    </div>
+
+    <!-- MODULE 2: Song Sentence Sequence -->
+    <div id="tab2" class="game-screen">
+      <div class="video-container">
+        <iframe id="youtube-player" src="https://www.youtube.com/embed/9N4cl_X7vRQ?enablejsapi=1" title="Beach Song Video" allowfullscreen></iframe>
+      </div>
+
+      <p style="text-align: center; font-weight:700; margin-bottom: 12px; color:#2E86DE;">
+        🎧 Listen to the song above and put the sentences in the correct order!
+      </p>
+
+      <div class="sentence-list" id="sentence-container">
+        <!-- Dynamic Sentence Cards -->
+      </div>
+
+      <div class="feedback-msg" id="song-feedback" style="text-align: center;"></div>
+      <div style="text-align: center;">
+        <button class="action-btn" onclick="checkSongSequence()">Check Song Order 🎶</button>
+      </div>
+    </div>
+
+    <!-- MODULE 3: Exercise Book -->
+    <div id="tab3" class="game-screen">
+      <h2 style="font-family:'Fredoka One'; color: var(--primary); margin-bottom: 10px; text-align:center;">
+        ✍️ Copy into Your Exercise Book
+      </h2>
+      <p style="text-align: center; margin-bottom: 15px; font-weight: 600;">
+        Write these complete holiday phrase pairs cleanly in your notebook:
+      </p>
+
+      <div class="notebook">
+        <ol>
+          <li><b>make</b> a sandcastle</li>
+          <li><b>look for</b> shells</li>
+          <li><b>catch</b> a fish</li>
+          <li><b>listen to</b> music</li>
+          <li><b>read</b> a book</li>
+          <li><b>take</b> a photo</li>
+          <li><b>paint</b> a picture</li>
+          <li><b>eat</b> an ice cream</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Game Data
+    const wordData = [
+      { jumbled: "s a n d c a s t l e", word: "sandcastle", verb: "make", icon: "🏰", verbs: ["make", "look for", "catch", "eat"] },
+      { jumbled: "s h e l l s", word: "shells", verb: "look for", icon: "🐚", verbs: ["look for", "read", "paint", "make"] },
+      { jumbled: "f i s h", word: "fish", verb: "catch", icon: "🐟", verbs: ["catch", "take", "listen to", "eat"] },
+      { jumbled: "m u s i c", word: "music", verb: "listen to", icon: "🎧", verbs: ["listen to", "make", "paint", "read"] },
+      { jumbled: "b o o k", word: "book", verb: "read", icon: "📖", verbs: ["read", "eat", "catch", "look for"] },
+      { jumbled: "p h o t o", word: "photo", verb: "take", icon: "📷", verbs: ["take", "paint", "make", "listen to"] },
+      { jumbled: "p i c t u r e", word: "picture", verb: "paint", icon: "🎨", verbs: ["paint", "read", "take", "catch"] },
+      { jumbled: "i c e  c r e a m", word: "ice cream", verb: "eat", icon: "🍦", verbs: ["eat", "make", "look for", "paint"] }
+    ];
+
+    const songSentencesCorrect = [
+      "Let's go to the beach.",
+      "Let's look for shells.",
+      "Let's play in the sand.",
+      "Let's run hand in hand.",
+      "Happy holiday, happy holiday for you and me.",
+      "Let's take a photo.",
+      "Let's catch a fish.",
+      "Let's swim in the sea, 1, 2, 3! Happy holiday!"
+    ];
+
+    let currentWordIndex = 0;
+    let selectedVerb = "";
+    let currentSongOrder = [...songSentencesCorrect].sort(() => Math.random() - 0.5);
+
+    // Initialize Game
+    window.onload = function() {
+      loadWordQuestion();
+      renderSongSentences();
+    };
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.game-screen').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+      document.getElementById(tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+
+      const teacherSpeech = document.getElementById('teacher-text');
+      if(tabId === 'tab1') {
+        teacherSpeech.innerText = "Teacher Wafi says: Unscramble the beach word and pick the correct verb!";
+      } else if(tabId === 'tab2') {
+        teacherSpeech.innerText = "Teacher Wafi says: Listen to the beach song on YouTube and put the sentences in order!";
+      } else if(tabId === 'tab3') {
+        teacherSpeech.innerText = "Teacher Wafi says: Great job! Now copy all these phrases nicely into your exercise book!";
+      }
+    }
+
+    // Module 1 Logic
+    function loadWordQuestion() {
+      const item = wordData[currentWordIndex];
+      document.getElementById('item-icon').innerText = item.icon;
+      document.getElementById('jumbled-display').innerText = item.jumbled;
+      document.getElementById('user-word').value = "";
+      document.getElementById('word-feedback').innerText = "";
+      selectedVerb = "";
+
+      // Update progress bar
+      const progressPercent = (currentWordIndex / wordData.length) * 100;
+      document.getElementById('word-progress').style.width = progressPercent + "%";
+
+      // Populate Verb Buttons
+      const verbContainer = document.getElementById('verb-container');
+      verbContainer.innerHTML = "";
+      item.verbs.forEach(v => {
+        const btn = document.createElement('button');
+        btn.className = "verb-btn";
+        btn.innerText = v;
+        btn.onclick = () => selectVerb(btn, v);
+        verbContainer.appendChild(btn);
+      });
+    }
+
+    function selectVerb(btn, verb) {
+      document.querySelectorAll('.verb-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedVerb = verb;
+    }
+
+    function checkWordAnswer() {
+      const typedWord = document.getElementById('user-word').value.trim().toLowerCase();
+      const currentItem = wordData[currentWordIndex];
+      const feedback = document.getElementById('word-feedback');
+
+      if (typedWord === currentItem.word && selectedVerb === currentItem.verb) {
+        feedback.className = "feedback-msg correct";
+        feedback.innerText = "🌟 Excellent! That's correct!";
+        confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+
+        setTimeout(() => {
+          currentWordIndex++;
+          if(currentWordIndex < wordData.length) {
+            loadWordQuestion();
+          } else {
+            document.getElementById('word-progress').style.width = "100%";
+            document.getElementById('teacher-text').innerText = "Teacher Wafi says: Outstanding! You completed all the words! Now try the song ordering!";
+            alert("🎉 Amazing job! You completed all vocabulary items!");
+          }
+        }, 1200);
+      } else {
+        feedback.className = "feedback-msg wrong";
+        if (typedWord !== currentItem.word && selectedVerb !== currentItem.verb) {
+          feedback.innerText = "❌ Check both your spelling and verb selection!";
+        } else if (typedWord !== currentItem.word) {
+          feedback.innerText = "❌ Check your spelling!";
+        } else {
+          feedback.innerText = "❌ Choose the correct action verb!";
+        }
+      }
+    }
+
+    // Module 2 Logic (Sentence Ordering)
+    function renderSongSentences() {
+      const container = document.getElementById('sentence-container');
+      container.innerHTML = "";
+
+      currentSongOrder.forEach((sentence, idx) => {
+        const card = document.createElement('div');
+        card.className = "sentence-card";
+        card.innerHTML = `
+          <div class="sentence-num">${idx + 1}</div>
+          <div class="sentence-text">${sentence}</div>
+          <div class="move-btns">
+            ${idx > 0 ? `<button class="move-btn" onclick="moveSentence(${idx}, -1)">▲</button>` : ''}
+            ${idx < currentSongOrder.length - 1 ? `<button class="move-btn" onclick="moveSentence(${idx}, 1)">▼</button>` : ''}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function moveSentence(index, direction) {
+      const targetIndex = index + direction;
+      if (targetIndex >= 0 && targetIndex < currentSongOrder.length) {
+        const temp = currentSongOrder[index];
+        currentSongOrder[index] = currentSongOrder[targetIndex];
+        currentSongOrder[targetIndex] = temp;
+        renderSongSentences();
+      }
+    }
+
+    function checkSongSequence() {
+      const isCorrect = currentSongOrder.every((val, index) => val === songSentencesCorrect[index]);
+      const feedback = document.getElementById('song-feedback');
+
+      if (isCorrect) {
+        feedback.className = "feedback-msg correct";
+        feedback.innerText = "🎉 Superb! You got the complete song order right!";
+        confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+        document.getElementById('teacher-text').innerText = "Teacher Wafi says: Bravo! You are a Beach Song Superstar! 🏆";
+      } else {
+        feedback.className = "feedback-msg wrong";
+        feedback.innerText = "❌ Not quite right yet. Listen carefully to the video and try re-arranging!";
+      }
+    }
+  </script>
+</body>
+</html>
